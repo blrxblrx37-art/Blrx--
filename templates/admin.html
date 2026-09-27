@@ -1160,6 +1160,7 @@
         }
 </script>
 
+{% if is_main_admin %}
 <script>
 async function loadAdmins() {
     const box = document.getElementById('adminsList');
@@ -1207,5 +1208,6 @@ async function deleteAdmin(encodedUsername) {
 }
 document.addEventListener('DOMContentLoaded', loadAdmins);
 </script>
+{% endif %}
 </body>
 </html>
