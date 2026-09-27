@@ -119,6 +119,7 @@
             </div>
         </div>
 
+        {% if is_main_admin %}
         <!-- Admin Management -->
         <div class="bg-[#12141c] rounded-xl gradient-border p-6 mb-8 hover-glow transition">
             <div class="flex items-center justify-between gap-4 flex-wrap mb-5">
@@ -136,6 +137,7 @@
             <div id="adminsList" class="space-y-2"></div>
         </div>
 
+        {% endif %}
         <!-- Project Limit Settings -->
         <div class="bg-[#12141c] rounded-xl gradient-border p-6 mb-8 hover-glow transition">
             <div class="flex items-center justify-between gap-3 flex-wrap mb-4">
@@ -1206,4 +1208,4 @@ async function deleteAdmin(encodedUsername) {
 document.addEventListener('DOMContentLoaded', loadAdmins);
 </script>
 </body>
-  </html>
+</html>
