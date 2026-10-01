@@ -1,0 +1,5 @@
+{
+    "max_servers_per_user": 3,
+    "maintenance_enabled": false,
+    "maintenance_message": "الاستضافة تحت الصيانة حاليًا. يرجى المحاولة لاحقًا."
+}
