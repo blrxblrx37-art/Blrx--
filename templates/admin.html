@@ -6,8 +6,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin | ＢＬ＿Ｘ２</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script nonce="{{ csp_nonce }}" src="https://cdn.tailwindcss.com"></script>
+    <script nonce="{{ csp_nonce }}" src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         body { background: radial-gradient(circle at top, rgba(34,197,94,0.16), transparent 22%), radial-gradient(circle at 80% 20%, rgba(168,85,247,0.08), transparent 20%), linear-gradient(180deg, #020405 0%, #091015 100%); color: #ffffff; font-family: 'Segoe UI', sans-serif; }
@@ -602,7 +602,7 @@
         </div>
     </div>
 
-    <script>
+    <script nonce="{{ csp_nonce }}">
         // Quick CPU Preset
         function setQuickCPU(value) {
             document.getElementById('cpuLimit').value = value;
@@ -1161,7 +1161,7 @@
 </script>
 
 {% if is_main_admin %}
-<script>
+<script nonce="{{ csp_nonce }}">
 async function loadAdmins() {
     const box = document.getElementById('adminsList');
     if (!box) return;
