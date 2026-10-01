@@ -1,0 +1,9 @@
+Flask
+Flask-Session
+werkzeug
+psutil
+gunicorn
+protobuf
+
+cryptography
+requests
