@@ -1,6 +1,0 @@
-Flask
-Flask-Session
-werkzeug
-psutil
-gunicorn
-protobuf
