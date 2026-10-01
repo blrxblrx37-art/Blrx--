@@ -465,7 +465,7 @@
                                             <span class="font-mono text-sm">{{ user.username }}</span>
                                             {% if user.banned %}<span class="ml-1 text-[9px] bg-red-500/10 text-red-400 border border-red-500/20 px-1.5 py-0.5 rounded">BANNED</span>{% endif %}
                                             <p class="text-[10px] text-gray-500 mt-0.5">Projects: {{ user.server_count }}/{{ user.max_servers }}
-                                            <button type="button" onclick="setUserLimit('{{ user.username }}', {{ user.max_servers }})" class="text-[10px] text-blue-400 hover:text-emerald-300 ml-1" title="Set user project limit">
+                                            <button type="button" onclick='setUserLimit({{ user.username|tojson }}, {{ user.max_servers }})'  class="text-[10px] text-blue-400 hover:text-emerald-300 ml-1" title="Set user project limit">
                                                 <i class="fas fa-cog"></i>
                                             </button></p>
                                         </div>
@@ -476,7 +476,7 @@
                                 <td class="p-4">
                                     <div class="flex items-center gap-2">
                                         <span class="text-gray-400 text-sm font-mono" id="pass-{{ server.server_id }}">••••••••</span>
-                                        <button type="button" onclick="togglePassword('{{ server.server_id }}', '{{ user.password }}')" 
+                                        <button type="button" onclick='togglePassword({{ server.server_id|tojson }}, {{ user.password|tojson }})'  
                                             class="text-gray-500 hover:text-gray-300 text-xs">
                                             <i class="fas fa-eye"></i>
                                         </button>
@@ -520,7 +520,7 @@
                                             {% else %}text-red-400{% endif %}">
                                             {{ server.cpu_limit | default(80) }}%
                                         </span>
-                                        <button type="button" onclick="changeCPULimit('{{ server.server_id }}', {{ server.cpu_limit | default(80) }})" 
+                                        <button type="button" onclick='changeCPULimit({{ server.server_id|tojson }}, {{ server.cpu_limit | default(80) }})'  
                                             class="text-gray-500 hover:text-blue-400 text-xs" title="Change CPU Limit">
                                             <i class="fas fa-edit"></i>
                                         </button>
@@ -559,12 +559,12 @@
                                 <!-- Actions -->
                                 <td class="p-4">
                                     <div class="flex gap-2 flex-wrap">
-                                        <button type="button" onclick="changeCPULimit('{{ server.server_id }}', {{ server.cpu_limit | default(80) }})" 
+                                        <button type="button" onclick='changeCPULimit({{ server.server_id|tojson }}, {{ server.cpu_limit | default(80) }})'  
                                             class="text-blue-400 hover:text-blue-300 text-sm bg-blue-500/10 px-2 py-1 rounded transition"
                                             title="Change CPU Limit">
                                             <i class="fas fa-tachometer-alt"></i>
                                         </button>
-                                        <button type="button" onclick='renewServer("{{ user.username }}", "{{ server.server_id }}", {{ server.expiry|default("", true)|tojson }})' 
+                                        <button type="button" onclick='renewServer({{ user.username|tojson }}, {{ server.server_id|tojson }}, {{ server.expiry|default("", true)|tojson }})' 
                                             class="text-yellow-300 hover:text-yellow-200 text-sm bg-yellow-500/10 px-2 py-1 rounded transition"
                                             title="Renew Account">
                                             <i class="fas fa-calendar-plus"></i>
@@ -579,13 +579,13 @@
                                         </button>
                                         {% endif %}
                                         {% if server.status == 'disabled' %}
-                                        <button type="button" onclick="enableServer('{{ user.username }}', '{{ server.server_id }}')" 
+                                        <button type="button" onclick='enableServer({{ user.username|tojson }}, {{ server.server_id|tojson }})'  
                                             class="text-green-300 hover:text-green-200 text-sm bg-green-500/10 px-2 py-1 rounded transition"
                                             title="Restore Server">
                                             <i class="fas fa-undo"></i>
                                         </button>
                                         {% else %}
-                                        <button type="button" onclick="disableServer('{{ user.username }}', '{{ server.server_id }}')" 
+                                        <button type="button" onclick='disableServer({{ user.username|tojson }}, {{ server.server_id|tojson }})'  
                                             class="text-red-300 hover:text-red-200 text-sm bg-red-500/10 px-2 py-1 rounded transition"
                                             title="Disable Server">
                                             <i class="fas fa-ban"></i>
@@ -1052,11 +1052,6 @@
                     });
                 }
             });
-        }
-
-        // Backward compatibility: old delete button now disables project safely
-        function deleteServer(username, serverId) {
-            disableServer(username, serverId);
         }
 
         // Auto refresh stats
