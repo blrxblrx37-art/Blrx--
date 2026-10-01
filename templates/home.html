@@ -327,11 +327,11 @@ main{padding:12px!important}
             <div class="flex justify-center pt-4">
                 <div class="profile-card">
                     <h3 class="text-md font-bold mb-1 text-blue-400"><i class="fas fa-user-circle mr-2"></i>Account Settings</h3>
-                    <p class="text-gray-500 text-xs mb-5">Update your hosting credentials</p>
+                    <p class="text-gray-500 text-xs mb-5">Change your account password securely</p>
                     
                     <div class="mb-3">
-                        <label class="block text-gray-400 text-xs mb-1.5">New Username</label>
-                        <input type="text" id="newUsername" value="{{ username }}" 
+                        <label class="block text-gray-400 text-xs mb-1.5">Current Password</label>
+                        <input type="password" id="currentPassword" placeholder="Enter current password" autocomplete="current-password"
                             class="w-full bg-[#05070b] border border-gray-700 rounded-lg px-4 py-2.5 text-sm text-white focus:border-blue-500 outline-none">
                     </div>
                     <div class="mb-3">
@@ -346,7 +346,7 @@ main{padding:12px!important}
                     </div>
                     <button onclick="updateCredentials()" 
                         class="w-full bg-blue-600 hover:bg-blue-500 py-2.5 rounded-lg text-sm font-bold transition mb-5">
-                        <i class="fas fa-check mr-1"></i> Update Credentials
+                        <i class="fas fa-check mr-1"></i> Change Password
                     </button>
 
                     <!-- System Info -->
@@ -466,7 +466,7 @@ main{padding:12px!important}
         }
 
         document.getElementById('serverAddr').innerText = window.location.href;
-        setStatusUI((('{{ current_server.status if current_server and current_server.status else 'stopped' }}').toLowerCase() === 'running'));
+        setStatusUI(String({{ (current_server.status if current_server and current_server.status else 'stopped')|tojson }}).toLowerCase() === 'running');
         loadCloudflareStatus(false);
         detectCloudPorts(false);
 
@@ -736,11 +736,27 @@ main{padding:12px!important}
         }
 
 
-        function sendCmd() {
-            let inp = document.getElementById('cmdInput'); let val = inp.value.trim(); if(!val) return;
-            let d = new Date().toLocaleTimeString('en-US',{hour12:false});
-            document.getElementById('logs').innerHTML += `\n<span style="color:#fa0">[${d}] $ ${val}</span>`;
-            fetch('/api/command', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({cmd:val, server_id:currentServerId})}).then(()=>{inp.value='';});
+        async function sendCmd() {
+            const inp = document.getElementById('cmdInput');
+            const val = inp.value.trim();
+            if (!val) return;
+            try {
+                const response = await fetch('/api/command', {
+                    method:'POST',
+                    headers:{'Content-Type':'application/json'},
+                    body:JSON.stringify({cmd:val, server_id:currentServerId})
+                });
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok || data.status !== 'success') {
+                    throw new Error(data.msg || data.error || 'Command failed');
+                }
+                const d = new Date().toLocaleTimeString('en-US',{hour12:false});
+                document.getElementById('logs').innerHTML += `\n<span style="color:#fa0">[${d}] $ ${val}</span>\n${data.output || ''}`;
+                inp.value = '';
+                loadLogs();
+            } catch (err) {
+                showToast(err.message || 'Command failed', 'error', 3500);
+            }
         }
 
         function updateStats() {
@@ -988,21 +1004,28 @@ main{padding:12px!important}
             return /\.(zip|tar|tgz|tar\.gz|tar\.bz2|tar\.xz|gz)$/i.test(name || '');
         }
 
-                function renderQuickFileActions(file, itemPath) {
-            const safePath = (itemPath || '').replace(/'/g, "\'");
-            const safeName = (file?.name || '').replace(/'/g, "\'");
-            const archive = isArchiveFile(file && file.name) || safeName.toLowerCase().endsWith('.zip');
+        // Safely embed a filename into an inline onclick handler.
+        function safeJsArg(value) {
+            const text = String(value ?? '');
+            return "'" + text.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\r/g, '\\r').replace(/\n/g, '\\n') + "'";
+        }
+
+        function renderQuickFileActions(file, itemPath) {
+            const safePath = safeJsArg(itemPath || '');
+            const safeName = safeJsArg(file?.name || '');
+            const displayName = file?.name || '';
+            const archive = isArchiveFile(file && file.name) || displayName.toLowerCase().endsWith('.zip');
             if (archive) {
                 return `
-                                        <button type="button" onclick="downloadFile('${safePath}');event.stopPropagation();" class="text-[11px] px-2 py-1 rounded-full border border-cyan-500/30 text-cyan-300 bg-cyan-500/10 hover:bg-cyan-500/20 transition">تحميل</button>
-                                        <button type="button" onclick="unzipFile('${safeName}');event.stopPropagation();" class="text-[11px] px-2 py-1 rounded-full border border-emerald-500/30 text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 transition">فك الضغط</button>
-                                        <button type="button" onclick="editFile('${safeName}');event.stopPropagation();" class="text-[11px] px-2 py-1 rounded-full border border-blue-500/30 text-blue-300 bg-blue-500/10 hover:bg-blue-500/20 transition">تعديل</button>
-                                        <button type="button" onclick="deleteFile('${safeName}');event.stopPropagation();" class="text-[11px] px-2 py-1 rounded-full border border-red-500/30 text-red-300 bg-red-500/10 hover:bg-red-500/20 transition">حذف</button>`;
+                                        <button type="button" onclick="downloadFile(${safePath});event.stopPropagation();" class="text-[11px] px-2 py-1 rounded-full border border-cyan-500/30 text-cyan-300 bg-cyan-500/10 hover:bg-cyan-500/20 transition">تحميل</button>
+                                        <button type="button" onclick="unzipFile(${safeName});event.stopPropagation();" class="text-[11px] px-2 py-1 rounded-full border border-emerald-500/30 text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 transition">فك الضغط</button>
+                                        <button type="button" onclick="editFile(${safeName});event.stopPropagation();" class="text-[11px] px-2 py-1 rounded-full border border-blue-500/30 text-blue-300 bg-blue-500/10 hover:bg-blue-500/20 transition">تعديل</button>
+                                        <button type="button" onclick="deleteFile(${safeName});event.stopPropagation();" class="text-[11px] px-2 py-1 rounded-full border border-red-500/30 text-red-300 bg-red-500/10 hover:bg-red-500/20 transition">حذف</button>`;
             }
             return `
-                                        <button type="button" onclick="downloadFile('${safePath}');event.stopPropagation();" class="text-[11px] px-2 py-1 rounded-full border border-cyan-500/30 text-cyan-300 bg-cyan-500/10 hover:bg-cyan-500/20 transition">تحميل</button>
-                                        <button type="button" onclick="editFile('${safeName}');event.stopPropagation();" class="text-[11px] px-2 py-1 rounded-full border border-emerald-500/30 text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 transition">تعديل</button>
-                                        <button type="button" onclick="deleteFile('${safeName}');event.stopPropagation();" class="text-[11px] px-2 py-1 rounded-full border border-red-500/30 text-red-300 bg-red-500/10 hover:bg-red-500/20 transition">حذف</button>`;
+                                        <button type="button" onclick="downloadFile(${safePath});event.stopPropagation();" class="text-[11px] px-2 py-1 rounded-full border border-cyan-500/30 text-cyan-300 bg-cyan-500/10 hover:bg-cyan-500/20 transition">تحميل</button>
+                                        <button type="button" onclick="editFile(${safeName});event.stopPropagation();" class="text-[11px] px-2 py-1 rounded-full border border-emerald-500/30 text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 transition">تعديل</button>
+                                        <button type="button" onclick="deleteFile(${safeName});event.stopPropagation();" class="text-[11px] px-2 py-1 rounded-full border border-red-500/30 text-red-300 bg-red-500/10 hover:bg-red-500/20 transition">حذف</button>`;
         }
         
         function renameFilePrompt(oldName) {
@@ -1104,11 +1127,24 @@ main{padding:12px!important}
             });
         }
         
-        function saveStartup() {
-            fetch(`/api/set_startup/${currentServerId}`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({main_file:document.getElementById('mainFileInput').value.trim(), requirements_file:document.getElementById('requirementsInput').value.trim()||null})})
-            .then(()=>syncRequirementsNow())
-            .then(()=>showToast('Saved!','success',2000))
-            .catch(()=>showToast('Saved!','success',2000));
+        async function saveStartup() {
+            try {
+                const mainFile = document.getElementById('mainFileInput').value.trim() || 'main.py';
+                const requirementsFile = document.getElementById('requirementsInput').value.trim() || 'requirements.txt';
+                const response = await fetch(`/api/set_startup/${currentServerId}`, {
+                    method:'POST',
+                    headers:{'Content-Type':'application/json'},
+                    body:JSON.stringify({main_file:mainFile, requirements_file:requirementsFile})
+                });
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok || data.error || data.success === false) {
+                    throw new Error(data.error || data.msg || 'Save failed');
+                }
+                await syncRequirementsNow();
+                showToast('Saved!','success',2000);
+            } catch (err) {
+                showToast(err.message || 'Save failed','error',3500);
+            }
         }
 
         // ============ GITHUB ============
@@ -1174,10 +1210,11 @@ main{padding:12px!important}
 
         // ============ PROFILE ============
         function updateCredentials() {
+            const currentPassword = document.getElementById('currentPassword').value;
             const newPass = document.getElementById('newPassword').value;
             const confirm = document.getElementById('confirmPassword').value;
             
-            if (!newPass || !confirm) {
+            if (!currentPassword || !newPass || !confirm) {
                 showToast('Please fill all password fields!', 'error');
                 return;
             }
@@ -1196,7 +1233,7 @@ main{padding:12px!important}
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({
-                    current_password: '',
+                    current_password: currentPassword,
                     new_password: newPass
                 })
             })
